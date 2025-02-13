@@ -111,29 +111,23 @@ namespace CurrencyExchange.BusinessLayer.Services
             try
             {
                 var historyData = await _exchangeRateRepository.GetHistoricalRatesAsync(request);
+                response.StartDate = request.StartDate.ToString("dd-MMMM-yyyy");
+                response.EndDate = request.EndDate.ToString("dd-MMMM-yyyy");
+                response.BaseCurrency = request.BaseCurrency;
                 if (historyData != null && historyData.Rates.Any())
                 {
                     var totalCount = historyData.Rates.Count();
-                    response.StartDate = request.StartDate;
-                    response.EndDate = request.EndDate;
-                    if (totalCount > 0 && totalCount > request.PageSize)
-                    {
-                       
+   
+                    if (totalCount > 0)
+                    {                       
                         List<CurrencyRates> rates = DictionaryConverter.ConvertToExchangeRateList(historyData.Rates);
                         var paginated = PaginationHelper.Paginate(rates, request.Page, request.PageSize);
                         response.PageNumber = paginated.PageNumber;
                         response.PageSize = paginated.PageSize;
                         response.Data = paginated.Data;
-                        response.TotalCount = paginated.TotalCount;
-                    }
-                    else
-                    {
-
-                        response.PageNumber = request.Page;
-                        response.PageSize = request.PageSize;
-                        response.Data = DictionaryConverter.ConvertToExchangeRateList(historyData.Rates);
                         response.TotalCount = totalCount;
                     }
+                    
                 }
 
             }
