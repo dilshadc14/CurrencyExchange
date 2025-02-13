@@ -8,8 +8,8 @@ namespace CurrencyExchange.BusinessModels.Model
 {
     public class CurrencyConversionResponse:BaseModelResponse
     {
-        public string From { get; set; }
-        public string To { get; set; }
+        public string FromCurrency { get; set; }
+        public string ToCurrency { get; set; }
         public decimal Amount { get; set; }
         public decimal ConvertedAmount { get; set; }
 

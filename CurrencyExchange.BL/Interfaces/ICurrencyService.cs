@@ -8,7 +8,9 @@ namespace CurrencyExchange.BusinessLayer.Interfaces
     public interface ICurrencyService
     {
         Task<CurrencyConversionResponse> ConvertCurrencyAsync(CurrencyConversionRequest request);
-        //Task<CurrencyConversionResponse> FetchLatestRatesAsync(string baseCurrency);
-        Task<ExchangeRate> FetchLatestRatesAsync(string baseCurrency);
+        //Task<CurrencyConversionResponse> FetchLatestRatesAsync(string baseCurrency);        
+        Task<ExchangeRateResponse> FetchLatestRatesAsync(string baseCurrency);
+      
+        Task<HistoricalRatesResponse> GetHistoricalRatesAsync(HistoricalRatesRequest request);
     }
 }

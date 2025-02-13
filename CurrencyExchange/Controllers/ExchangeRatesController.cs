@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using CurrencyExchange.BusinessLayer.Common;
 using CurrencyExchange.BusinessLayer.Interfaces;
 using CurrencyExchange.BusinessModels.Model;
 using Microsoft.AspNetCore.Mvc;
@@ -20,8 +21,26 @@ namespace CurrencyExchange.Controllers
         [HttpPost("convert")]
         public async Task<IActionResult> ConvertCurrency([FromBody] CurrencyConversionRequest request)
         {
-            var response = await _currencyService.ConvertCurrencyAsync(request);
-            return Ok(response);
+            if (ModelState.IsValid)
+            {
+                if (string.IsNullOrEmpty(request.From) || string.IsNullOrEmpty(request.To))
+                {
+                    return BadRequest("Please provide the currency to exchange");
+                }
+                if (new[] { "TRY", "PLN", "THB", "MXN" }.Contains(request.From) || new[] { "TRY", "PLN", "THB", "MXN" }.Contains(request.To))
+                {
+                    return BadRequest("Conversion for TRY, PLN, THB, and MXN is not supported.");
+                }
+                var response = await _currencyService.ConvertCurrencyAsync(request);
+                return Ok(response);
+            }
+            else
+            {
+                var errors = ModelState.Keys
+               .SelectMany(key => ModelState[key].Errors.Select(x => new { Field = key, Message = x.ErrorMessage }))
+               .ToList();
+                return BadRequest(new { Errors = errors });
+            }
         }
     }
 }
