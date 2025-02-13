@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="8.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\CurrencyExchange.BusinessModels\CurrencyExchange.BusinessModels.csproj" />
     <ProjectReference Include="..\CurrencyExchange.DataAccess\CurrencyExchange.DataAccess.csproj" />
   </ItemGroup>

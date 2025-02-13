@@ -4,15 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CurrencyExchange.BusinessModels.Entities
+namespace CurrencyExchange.BusinessModels.DTO
 {
-    public class ExchangeRate
+    public class ExchangeRateDTO
     {
         public string BaseCurrency { get; set; }
-        public string TargetCurrency { get; set; }
-        public decimal Rate { get; set; }
+        public Dictionary<string, decimal> Rates { get; set; }
         public DateTime Date { get; set; }
     }
-
-   
 }

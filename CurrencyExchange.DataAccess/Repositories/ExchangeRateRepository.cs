@@ -5,8 +5,10 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using CurrencyExchange.BusinessModels.Entities;
 using CurrencyExchange.DataAccess.interfaces;
+using Microsoft.Extensions.Caching.Memory;
+using CurrencyExchange.BusinessModels.DTO;
+using CurrencyExchange.BusinessModels.Entities;
 
 namespace CurrencyExchange.DataAccess.Repositories
 {
@@ -14,12 +16,17 @@ namespace CurrencyExchange.DataAccess.Repositories
     {
         private readonly HttpClient _httpClient;
         private readonly string _frankfurterApiUrl = "https://api.frankfurter.app/latest";
-
-        public ExchangeRateRepository(HttpClient httpClient)
+        private readonly IMemoryCache _cache;
+        public ExchangeRateRepository(IMemoryCache cache,HttpClient httpClient)
         {
+            _cache = cache;
             _httpClient = httpClient;
         }
-
+        public async Task<ExchangeRateDTO> FetchLatestRatesAsync(string baseCurrency)
+        {
+            var response = await _httpClient.GetStringAsync($"{_frankfurterApiUrl}?base={baseCurrency}");
+            return JsonSerializer.Deserialize<ExchangeRateDTO>(response);
+        }
         public async Task<ExchangeRateDTO> GetLatestRateAsync(string baseCurrency, string targetCurrency)
         {       
             var response = await _httpClient.GetFromJsonAsync<ExchangeRateDTO>($"{_frankfurterApiUrl}?base={baseCurrency}");
@@ -35,14 +42,14 @@ namespace CurrencyExchange.DataAccess.Repositories
             return response;
         }
 
-        public async Task<IEnumerable<ExchangeRate>> GetHistoricalRatesAsync(string baseCurrency, DateTime startDate, DateTime endDate)
+        public async Task<IEnumerable<ExchangeRateDTO>> GetHistoricalRatesAsync(string baseCurrency, DateTime startDate, DateTime endDate)
         {
 
-            var response = await _httpClient.GetStringAsync($"{_frankfurterApiUrl}?base={baseCurrency}");
+            var response = await _httpClient.GetFromJsonAsync<IEnumerable<ExchangeRateDTO>>($"{_frankfurterApiUrl}/{startDate:yyyy-MM-dd}..{endDate:yyyy-MM-dd}?base={baseCurrency}");
+
             
-            var data= JsonSerializer.Deserialize<dynamic>(response);
-            //var response = await _httpClient.GetFromJsonAsync<IEnumerable<ExchangeRate>>($"https://api.frankfurter.app/{startDate:yyyy-MM-dd}..{endDate:yyyy-MM-dd}?base={baseCurrency}");
-            return null;
+            
+            return response;
         }
     }
 }

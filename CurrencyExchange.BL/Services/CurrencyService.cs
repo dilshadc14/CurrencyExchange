@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using CurrencyExchange.BusinessLayer.Common;
 using CurrencyExchange.BusinessLayer.Interfaces;
+using CurrencyExchange.BusinessModels.DTO;
+using CurrencyExchange.BusinessModels.Entities;
 using CurrencyExchange.BusinessModels.Model;
 using CurrencyExchange.DataAccess.interfaces;
 
@@ -17,10 +19,10 @@ namespace CurrencyExchange.BusinessLayer.Services
     public class CurrencyService : ICurrencyService
     {
         private readonly IExchangeRateRepository _exchangeRateRepository;
-
         public CurrencyService(IExchangeRateRepository exchangeRateRepository)
         {
             _exchangeRateRepository = exchangeRateRepository;
+       
         }
 
         public async Task<CurrencyConversionResponse> ConvertCurrencyAsync(CurrencyConversionRequest request)
@@ -78,5 +80,12 @@ namespace CurrencyExchange.BusinessLayer.Services
 
             return response;
         }
+        public async Task<ExchangeRate> FetchLatestRatesAsync(string baseCurrency)
+        {
+            var exchangeRate = await _exchangeRateRepository.FetchLatestRatesAsync(baseCurrency);
+            //return _mapper.Map<ExchangeRate>(exchangeRate);
+            return new ExchangeRate();
+        }
+
     }
 }

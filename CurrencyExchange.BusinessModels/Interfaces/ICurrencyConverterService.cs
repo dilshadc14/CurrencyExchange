@@ -12,5 +12,7 @@ namespace CurrencyExchange.BusinessModels.Interfaces
         Task<ExchangeRate> GetLatestRateAsync(string baseCurrency, string targetCurrency);
         Task<decimal> ConvertCurrencyAsync(string from, string to, decimal amount);
         Task<IEnumerable<ExchangeRate>> GetHistoricalRatesAsync(string baseCurrency, DateTime startDate, DateTime endDate);
+        Task<ExchangeRate> FetchLatestRatesAsync(string baseCurrency);
+       
     }
 }

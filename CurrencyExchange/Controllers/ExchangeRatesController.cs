@@ -5,11 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CurrencyExchange.Controllers
 {
-    //[ApiVersion("1.0")]
-    //[Route("api/v{version:apiVersion}/convert")]
-    //[ApiController]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
-    [Route("api/[controller]")]
     public class ExchangeRatesController : Controller
     {
         private readonly ICurrencyService _currencyService;
