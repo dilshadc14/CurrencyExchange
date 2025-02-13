@@ -12,6 +12,7 @@ using CurrencyExchange.BusinessModels.DTO;
 using CurrencyExchange.BusinessModels.Entities;
 using CurrencyExchange.BusinessModels.Model;
 using CurrencyExchange.DataAccess.interfaces;
+using CurrencyExchange.Helper;
 
 
 
@@ -57,6 +58,7 @@ namespace CurrencyExchange.BusinessLayer.Services
                     response.Message = $"Exchange rate not found for {fromCurrency} to {toCurrency}.";
                     return response;
                 }
+
                 decimal conversionRate = rate.Rates[toCurrency];
                 decimal convertedAmount = request.Amount * conversionRate;
                 response.FromCurrency = fromCurrency;
@@ -108,6 +110,31 @@ namespace CurrencyExchange.BusinessLayer.Services
             var response = new HistoricalRatesResponse();
             try
             {
+                var historyData = await _exchangeRateRepository.GetHistoricalRatesAsync(request);
+                if (historyData != null && historyData.Rates.Any())
+                {
+                    var totalCount = historyData.Rates.Count();
+                    response.StartDate = request.StartDate;
+                    response.EndDate = request.EndDate;
+                    if (totalCount > 0 && totalCount > request.PageSize)
+                    {
+                       
+                        List<CurrencyRates> rates = DictionaryConverter.ConvertToExchangeRateList(historyData.Rates);
+                        var paginated = PaginationHelper.Paginate(rates, request.Page, request.PageSize);
+                        response.PageNumber = paginated.PageNumber;
+                        response.PageSize = paginated.PageSize;
+                        response.Data = paginated.Data;
+                        response.TotalCount = paginated.TotalCount;
+                    }
+                    else
+                    {
+
+                        response.PageNumber = request.Page;
+                        response.PageSize = request.PageSize;
+                        response.Data = DictionaryConverter.ConvertToExchangeRateList(historyData.Rates);
+                        response.TotalCount = totalCount;
+                    }
+                }
 
             }
             catch (Exception ex)
@@ -117,5 +144,7 @@ namespace CurrencyExchange.BusinessLayer.Services
             }
             return response;
         }
+       
     }
 }
+

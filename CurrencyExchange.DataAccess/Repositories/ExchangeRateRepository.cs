@@ -22,18 +22,13 @@ namespace CurrencyExchange.DataAccess.Repositories
         private readonly HttpClient _httpClient;
         private readonly string _frankfurterApiUrl = "https://api.frankfurter.app";
         private readonly IMemoryCache _cache;
-        private readonly AsyncRetryPolicy<HttpResponseMessage> _retryPolicy;
-        private readonly AsyncCircuitBreakerPolicy<HttpResponseMessage> _circuitBreakerPolicy;
+       
 
         public ExchangeRateRepository(IMemoryCache cache,HttpClient httpClient)
         {
             _cache = cache;
             _httpClient = httpClient;
-            _retryPolicy = HttpPolicyExtensions.HandleTransientHttpError()
-           .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
-
-            _circuitBreakerPolicy = HttpPolicyExtensions.HandleTransientHttpError()
-                .CircuitBreakerAsync(3, TimeSpan.FromMinutes(1));
+         
         }
 
         public async Task<ExchangeRateDTO> FetchLatestRatesAsync(string baseCurrency)
@@ -41,27 +36,15 @@ namespace CurrencyExchange.DataAccess.Repositories
             var cacheKey = $"LatestRates_{baseCurrency}";
 
 
-            //if (!_cache.TryGetValue(cacheKey, out ExchangeRateDTO rates))
-            //{
-            //    var response = await _httpClient.GetFromJsonAsync<ExchangeRateDTO>($"{_frankfurterApiUrl}/latest?from={baseCurrency}");
-            //    _cache.Set(cacheKey, response, TimeSpan.FromMinutes(10));
-            //    rates = response;
-            //}
-
-          
-            if (_cache.TryGetValue(cacheKey, out ExchangeRateDTO cachedRates))
+            if (!_cache.TryGetValue(cacheKey, out ExchangeRateDTO rates))
             {
-                return cachedRates;
+                var response = await _httpClient.GetFromJsonAsync<ExchangeRateDTO>($"{_frankfurterApiUrl}/latest?from={baseCurrency}");
+                _cache.Set(cacheKey, response, TimeSpan.FromMinutes(10));
+                rates = response;
             }
 
-            var response = await _retryPolicy.ExecuteAsync(() =>
-                _circuitBreakerPolicy.ExecuteAsync(() =>
-                    _httpClient.GetAsync($"{_frankfurterApiUrl}/latest?from={baseCurrency}")));
 
-            response.EnsureSuccessStatusCode();
-            var rates = await response.Content.ReadFromJsonAsync<ExchangeRateDTO>();
 
-            _cache.Set(cacheKey, rates, TimeSpan.FromMinutes(30)); // Cache for 30 min
             return rates;
           
         }

@@ -12,6 +12,6 @@ namespace CurrencyExchange.BusinessModels.Model
         public DateTime ExchangeDate { get; set; }
         public string Currency { get; set; }
         public string CurrencyCode { get; set; }
-        public decimal CurrencyAmount { get; set; }
+        public decimal Rate { get; set; }
     }
 }
