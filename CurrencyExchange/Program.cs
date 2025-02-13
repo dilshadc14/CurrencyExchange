@@ -20,6 +20,8 @@ builder.Services.AddSingleton<JwtService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IExchangeRateRepository, ExchangeRateRepository>();
 builder.Services.AddScoped<ICurrencyService, CurrencyService>();
+builder.Services.Configure<CurrencySettings>(builder.Configuration.GetSection("CurrencySettings"));
+builder.Services.AddSingleton<ICurrencyValidationService, CurrencyValidationService>();
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);

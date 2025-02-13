@@ -14,10 +14,12 @@ namespace CurrencyExchange.Controllers
     public class ExchangeRatesController : Controller
     {
         private readonly ICurrencyService _currencyService;
+        private readonly ICurrencyValidationService _currencysetting;
 
-        public ExchangeRatesController(ICurrencyService currencyService)
+        public ExchangeRatesController(ICurrencyService currencyService, ICurrencyValidationService currencysetting)
         {
             _currencyService = currencyService;
+            _currencysetting = currencysetting;
         }
 
         [HttpPost("convert")]
@@ -29,9 +31,13 @@ namespace CurrencyExchange.Controllers
                 {
                     return BadRequest("Please provide the currency to exchange");
                 }
-                if (new[] { "TRY", "PLN", "THB", "MXN" }.Contains(request.From) || new[] { "TRY", "PLN", "THB", "MXN" }.Contains(request.To))
+                if (!_currencysetting.IsCurrencyAllowed(request.From) )
                 {
-                    return BadRequest("Conversion for TRY, PLN, THB, and MXN is not supported.");
+                    return BadRequest($"Currency '{request.From}'  is not allowed.");
+                }
+                if (!_currencysetting.IsCurrencyAllowed(request.To))
+                {
+                    return BadRequest($"Currency '{request.To}'  is not allowed.");
                 }
                 var response = await _currencyService.ConvertCurrencyAsync(request);
                 return Ok(response);
@@ -48,7 +54,16 @@ namespace CurrencyExchange.Controllers
         [HttpGet("latest")]
         public async Task<IActionResult> GetLatestRates([FromQuery] string baseCurrency)
         {
-           
+            if (string.IsNullOrEmpty(baseCurrency))
+            {
+                return BadRequest("Currency code is required.");
+            }
+
+            if (!_currencysetting.IsCurrencyAllowed(baseCurrency))
+            {
+                return BadRequest($"Currency '{baseCurrency}' is not allowed.");
+            }
+
             var rates = await _currencyService.FetchLatestRatesAsync(baseCurrency);
             
             return Ok(rates);
@@ -60,7 +75,7 @@ namespace CurrencyExchange.Controllers
             {
                 return BadRequest("Please provide the currency to exchange");
             }
-            if (new[] { "TRY", "PLN", "THB", "MXN" }.Contains(request.BaseCurrency))
+            if (!_currencysetting.IsCurrencyAllowed(request.BaseCurrency))
             {
                 return BadRequest("Conversion for TRY, PLN, THB, and MXN is not supported.");
             }
