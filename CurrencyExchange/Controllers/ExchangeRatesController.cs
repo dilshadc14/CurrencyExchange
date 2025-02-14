@@ -24,7 +24,7 @@ namespace CurrencyExchange.Controllers
         }
 
         [HttpPost("convert")]
-        [Authorize(Roles = "UserOrAdmin")]
+        [Authorize(Policy = "UserOrAdmin")]
         [EnableRateLimiting("StrictLimit")]
         public async Task<IActionResult> ConvertCurrency([FromBody] CurrencyConversionRequest request)
         {
@@ -55,7 +55,7 @@ namespace CurrencyExchange.Controllers
         }
 
         [HttpGet("latest")]
-        [Authorize(Roles = "UserOrAdmin")]
+        [Authorize(Policy = "UserOrAdmin")]
         [EnableRateLimiting("LowTrafficPolicy")]
         public async Task<IActionResult> GetLatestRates([FromQuery] string baseCurrency)
         {
@@ -74,7 +74,7 @@ namespace CurrencyExchange.Controllers
             return Ok(rates);
         }
         [HttpGet("historical")]
-        [Authorize(Roles = "AdminOnly")]
+        [Authorize(Policy = "AdminOnly")]
         [EnableRateLimiting("StrictLimit")]
         public async Task<IActionResult> GetHistoricalRates([FromQuery] HistoricalRatesRequest request)
         {
