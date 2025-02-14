@@ -43,32 +43,7 @@ var retryPolicy = HttpPolicyExtensions
         });
 
 
-//var circuitBreakerPolicy = Policy
-//    .HandleResult<HttpResponseMessage>(response =>
-//    {
-//        return response.StatusCode == System.Net.HttpStatusCode.InternalServerError || // 500
-//         response.StatusCode == System.Net.HttpStatusCode.NotFound || // 404
-//         response.StatusCode == System.Net.HttpStatusCode.Forbidden
-//         || response.StatusCode == System.Net.HttpStatusCode.Unauthorized; // 403
-//    })
-//    .Or<HttpRequestException>() // Handle HTTP request exceptions
-//    .Or<TimeoutException>() // Handle timeouts
-//    .CircuitBreakerAsync(
-//        handledEventsAllowedBeforeBreaking: 3, 
-//        durationOfBreak: TimeSpan.FromSeconds(30),
-//         onBreak: (exception, duration) =>
-//        {
-//            //Console.WriteLine($"Circuit opened. Blocking requests for {duration.TotalSeconds} seconds.");
-//            string logMessage = $"Circuit opened. Blocking requests for {duration.TotalSeconds} seconds";
-//            Log.Information(logMessage);
-//        },
-//        onReset: () =>
-//        {
-//            string logMessage = $"Circuit reset (closed)";
-//            Log.Information(logMessage);
-//            //Console.WriteLine("Circuit reset (closed).");
-//        }
-//    );
+
 
 var circuitBreakerPolicy = HttpPolicyExtensions
     .HandleTransientHttpError()
@@ -124,10 +99,13 @@ builder.Services.AddSwaggerGen(options =>
         Type = "string",
         Format = "date"
     });
+
+
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
+        //Type = SecuritySchemeType.ApiKey,
+        Type = SecuritySchemeType.Http,
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
@@ -146,31 +124,31 @@ builder.Services.AddSwaggerGen(options =>
                     Id = "Bearer"
                 }
             },
-            Array.Empty<string>()
+             new string[] {}
         }
     });
 });
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]);
+var secretKey = Encoding.ASCII.GetBytes(jwtSettings["Key"]);
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(key)
-    };
-});
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings["Issuer"],
+            ValidAudience = jwtSettings["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(secretKey)
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+
 var app = builder.Build();
 
 app.UseStaticFiles(); 
