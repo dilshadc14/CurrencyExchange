@@ -14,6 +14,8 @@ using Polly;
 using Polly.CircuitBreaker;
 using Polly.Extensions.Http;
 using Polly.Retry;
+using CurrencyExchange.BusinessModels;
+using System.Net;
 
 namespace CurrencyExchange.DataAccess.Repositories
 {
@@ -38,9 +40,29 @@ namespace CurrencyExchange.DataAccess.Repositories
 
             if (!_cache.TryGetValue(cacheKey, out ExchangeRateDTO rates))
             {
-                var response = await _httpClient.GetFromJsonAsync<ExchangeRateDTO>($"{_frankfurterApiUrl}/latest?from={baseCurrency}");
-                _cache.Set(cacheKey, response, TimeSpan.FromMinutes(10));
-                rates = response;
+                //var response = await _httpClient.GetFromJsonAsync<ExchangeRateDTO>($"{_frankfurterApiUrl}/latest?from={baseCurrency}");
+                //_cache.Set(cacheKey, response, TimeSpan.FromMinutes(10));
+                //rates = response;
+                var response = await _httpClient.GetAsync($"{_frankfurterApiUrl}/latest?from={baseCurrency}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    
+                    switch (response.StatusCode)
+                    {
+                        case System.Net.HttpStatusCode.InternalServerError: 
+                            throw new ApiException(HttpStatusCode.InternalServerError, "Internal server error occurred.");
+                        case System.Net.HttpStatusCode.NotFound: 
+                            throw new ApiException(HttpStatusCode.NotFound, "Resource not found.");
+                        case System.Net.HttpStatusCode.Forbidden: 
+                            throw new ApiException(HttpStatusCode.Forbidden, "Access forbidden.");
+                        default:
+                            throw new ApiException(HttpStatusCode.BadRequest, $"Failed to fetch exchange rates. Status code: {response.StatusCode}");
+                    }
+                }
+                rates = await response.Content.ReadFromJsonAsync<ExchangeRateDTO>();
+                _cache.Set(cacheKey, rates, TimeSpan.FromMinutes(10));
+               
+
             }
 
 

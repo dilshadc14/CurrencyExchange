@@ -10,7 +10,7 @@ namespace CurrencyExchange.Controllers
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
-  //  [Authorize]
+  // [Authorize]
     public class ExchangeRatesController : Controller
     {
         private readonly ICurrencyService _currencyService;
