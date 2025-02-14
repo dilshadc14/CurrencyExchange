@@ -4,13 +4,14 @@ using CurrencyExchange.BusinessLayer.Interfaces;
 using CurrencyExchange.BusinessModels.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace CurrencyExchange.Controllers
 {
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
-   [Authorize]
+
     public class ExchangeRatesController : Controller
     {
         private readonly ICurrencyService _currencyService;
@@ -23,6 +24,8 @@ namespace CurrencyExchange.Controllers
         }
 
         [HttpPost("convert")]
+        [Authorize(Roles = "UserOrAdmin")]
+        [EnableRateLimiting("StrictLimit")]
         public async Task<IActionResult> ConvertCurrency([FromBody] CurrencyConversionRequest request)
         {
             if (ModelState.IsValid)
@@ -52,6 +55,8 @@ namespace CurrencyExchange.Controllers
         }
 
         [HttpGet("latest")]
+        [Authorize(Roles = "UserOrAdmin")]
+        [EnableRateLimiting("LowTrafficPolicy")]
         public async Task<IActionResult> GetLatestRates([FromQuery] string baseCurrency)
         {
             if (string.IsNullOrEmpty(baseCurrency))
@@ -69,6 +74,8 @@ namespace CurrencyExchange.Controllers
             return Ok(rates);
         }
         [HttpGet("historical")]
+        [Authorize(Roles = "AdminOnly")]
+        [EnableRateLimiting("StrictLimit")]
         public async Task<IActionResult> GetHistoricalRates([FromQuery] HistoricalRatesRequest request)
         {
             if (string.IsNullOrEmpty(request.BaseCurrency))

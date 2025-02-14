@@ -19,9 +19,14 @@ namespace CurrencyExchange.Controllers
         [HttpPost("login")]
         public IActionResult Login([FromBody] BusinessModels.Model.LoginRequest request)
         {
-            if (request.Username == "admin" && request.Password == "password")
+            if (request.Username == "admin" && request.Password == "admin123")
             {
-                var token = _jwtService.GenerateToken(request.Username);
+                var token = _jwtService.GenerateToken("Admin", request.Username);
+                return Ok(new { Token = token });
+            }
+            else if(request.Username == "user" && request.Password == "user123")
+            {
+                var token = _jwtService.GenerateToken("User", request.Username);
                 return Ok(new { Token = token });
             }
 

@@ -16,6 +16,9 @@ using Polly;
 using Microsoft.Extensions.DependencyInjection;
 using Polly.Extensions.Http;
 using Serilog;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
+
 var builder = WebApplication.CreateBuilder(args);
 string logFileName = $"logs/retry-log-{DateTime.UtcNow:yyyy-MM-dd}.txt";
 builder.Services.AddControllers();
@@ -146,12 +149,74 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
+//builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("UserOrAdmin", policy => policy.RequireRole("User", "Admin"));
+});
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = 429; 
+    options.OnRejected = (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.WriteAsync("Rate limit exceeded. Please try again later.", cancellationToken);
+        return new ValueTask();
+    };
+
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "global",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10, 
+                Window = TimeSpan.FromMinutes(1), 
+                QueueLimit = 2
+            }
+        )
+    );
+    options.AddPolicy<string>("StrictLimit", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "strict",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5, 
+                Window = TimeSpan.FromMinutes(1), 
+                QueueLimit = 0 
+            }
+        )
+    );
+    options.AddPolicy<Guid>("UserLimit", context =>
+    {
+        var userId = context.User.FindFirst("UserId")?.Value;
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: userId != null ? Guid.Parse(userId) : Guid.NewGuid(),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1)
+            }
+        );
+    });
+    options.AddPolicy("LowTrafficPolicy", context =>
+       RateLimitPartition.GetFixedWindowLimiter(
+           partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "low-traffic",
+           factory: _ => new FixedWindowRateLimiterOptions
+           {
+               PermitLimit = 10,
+               Window = TimeSpan.FromMinutes(1),
+               QueueLimit = 0 
+           }
+       )
+   );
+});
+
 
 
 var app = builder.Build();
 
-app.UseStaticFiles(); 
+app.UseStaticFiles();
+app.UseRateLimiter();
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(

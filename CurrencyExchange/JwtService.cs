@@ -23,26 +23,27 @@ namespace CurrencyExchange
             _expirationMinutes = int.Parse(jwtSettings["ExpirationMinutes"]);
         }
 
-        public string GenerateToken(string username)
-        {
-            var claims = new[]
-            {
-            new Claim(JwtRegisteredClaimNames.Sub, username),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+        public string GenerateToken(string role,string username)
+        {          
 
+            var tokenHandler = new JwtSecurityTokenHandler();
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_key));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                new Claim(ClaimTypes.Name, username), 
+                new Claim(ClaimTypes.Role, role) 
+            }),
+                Expires = DateTime.UtcNow.AddMinutes(_expirationMinutes), 
+                Issuer = _issuer,
+                Audience = _audience,
+                SigningCredentials = creds
+            };
 
-            var token = new JwtSecurityToken(
-                _issuer,
-                _audience,
-                claims,
-                expires: DateTime.UtcNow.AddMinutes(_expirationMinutes),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
         }
     }
 }
