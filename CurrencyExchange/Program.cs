@@ -1,6 +1,6 @@
 ﻿using System.Text;
 using Asp.Versioning;
- 
+
 using CurrencyExchange.BusinessLayer.Interfaces;
 using CurrencyExchange.BusinessLayer.Services;
 using CurrencyExchange.BusinessModels.Interfaces;
@@ -18,13 +18,46 @@ using Polly.Extensions.Http;
 using Serilog;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
-
+using CurrencyExchange.MiddleWares;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Logs;
+using CurrencyExchange.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 string logFileName = $"logs/retry-log-{DateTime.UtcNow:yyyy-MM-dd}.txt";
 builder.Services.AddControllers();
+//Log.Logger = new LoggerConfiguration()
+//    .WriteTo.File("logs/retry-log.txt", rollingInterval: RollingInterval.Day)
+//    .CreateLogger();
+
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.File("logs/retry-log.txt", rollingInterval: RollingInterval.Day)
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
     .CreateLogger();
+
+
+
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracerProviderBuilder =>
+    {
+        tracerProviderBuilder
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("CurrencyExchange"))
+            .AddAspNetCoreInstrumentation() 
+            .AddConsoleExporter(); 
+        //.AddOtlpExporter(options =>
+        //    options.Endpoint = new Uri("http://localhost:4317") 
+        //)
+    });
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options.IncludeFormattedMessage = true;
+   
+});
+
+builder.Host.UseSerilog();
+
+
 
 var retryPolicy = HttpPolicyExtensions
     .HandleTransientHttpError() 
@@ -44,10 +77,6 @@ var retryPolicy = HttpPolicyExtensions
             Log.Information(logMessage);
          
         });
-
-
-
-
 var circuitBreakerPolicy = HttpPolicyExtensions
     .HandleTransientHttpError()
     .Or<TimeoutException>()
@@ -70,18 +99,11 @@ var circuitBreakerPolicy = HttpPolicyExtensions
             string logMessage = $"Circuit reset (closed)";
              Log.Information(logMessage);
         });
-
-
-
-// Add HttpClient with circuit breaker policy
 builder.Services.AddHttpClient("ExternalApi", client =>
 {
     client.BaseAddress = new Uri("https://api.frankfurter.app/");
 }).AddPolicyHandler(retryPolicy)
 .AddPolicyHandler(circuitBreakerPolicy);
-
-
-
 builder.Services.AddSingleton<JwtService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IExchangeRateRepository, ExchangeRateRepository>();
@@ -214,7 +236,24 @@ builder.Services.AddRateLimiter(options =>
 
 
 var app = builder.Build();
+app.UseMiddleware<ResponseTimeMiddleware>();
 
+app.UseSerilogRequestLogging(options =>
+{
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+    {
+        diagnosticContext.Set("ClientIP", httpContext.Connection.RemoteIpAddress?.ToString());
+        var clientId = httpContext.User.FindFirst("client_id")?.Value;
+        diagnosticContext.Set("ClientId", clientId);
+        diagnosticContext.Set("Method", httpContext.Request.Method);
+        diagnosticContext.Set("Endpoint", httpContext.Request.Path);
+        diagnosticContext.Set("ResponseCode", httpContext.Response.StatusCode);
+        if (httpContext.Items.TryGetValue("ResponseTime", out var responseTime))
+        {
+            diagnosticContext.Set("ResponseTime", $"{responseTime}ms");
+        }
+    };
+});
 app.UseStaticFiles();
 app.UseRateLimiter();
 app.UseStaticFiles(new StaticFileOptions

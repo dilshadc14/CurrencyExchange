@@ -6,9 +6,9 @@ using System.Text.Json;
 using System.Threading.Tasks;
 
 
-namespace CurrencyExchange
+namespace CurrencyExchange.MiddleWares
 {
- 
+
 
     public class ExceptionHandlingMiddleware
     {
@@ -28,13 +28,13 @@ namespace CurrencyExchange
             }
             catch (Exception ex)
             {
-                
+
                 await HandleExceptionAsync(context, ex);
             }
         }
 
         private static Task HandleExceptionAsync(HttpContext context, Exception exception)
-        {           
+        {
             var statusCode = exception switch
             {
                 ApiException apiException => (int)apiException.StatusCode,
@@ -46,8 +46,8 @@ namespace CurrencyExchange
             var errorResponse = new
             {
                 StatusCode = statusCode,
-                Message = exception.Message,
-                Details = exception.StackTrace 
+                exception.Message,
+                Details = exception.StackTrace
             };
             var jsonResponse = JsonSerializer.Serialize(errorResponse);
 
