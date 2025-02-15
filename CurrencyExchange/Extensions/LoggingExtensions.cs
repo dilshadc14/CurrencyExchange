@@ -31,9 +31,10 @@ namespace CurrencyExchange.Extensions
                     diagnosticContext.Set("Method", httpContext.Request.Method);
                     diagnosticContext.Set("Endpoint", httpContext.Request.Path);
                     diagnosticContext.Set("ResponseCode", httpContext.Response.StatusCode);
-
-                    if (httpContext.Items.TryGetValue("ResponseTime", out var rt))
-                        diagnosticContext.Set("ResponseTime", $"{rt}ms");
+                    if (httpContext.Items.TryGetValue("ResponseTime", out var responseTime))
+                    {
+                        diagnosticContext.Set("ResponseTime", $"{responseTime}ms");
+                    }
                 };
             });
 
@@ -41,3 +42,16 @@ namespace CurrencyExchange.Extensions
         }
     }
 }
+
+//string logFileName = $"logs/retry-log-{DateTime.UtcNow:yyyy-MM-dd}.txt";
+//Log.Logger = new LoggerConfiguration()
+//    .WriteTo.File("logs/retry-log.txt", rollingInterval: RollingInterval.Day)
+//    .CreateLogger();
+
+//Log.Logger = new LoggerConfiguration()
+//    .ReadFrom.Configuration(builder.Configuration)
+//    .Enrich.FromLogContext()
+//    .CreateLogger();
+
+
+
