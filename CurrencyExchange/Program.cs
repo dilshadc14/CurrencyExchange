@@ -5,6 +5,7 @@ using Microsoft.Extensions.FileProviders;
 using CurrencyExchange.MiddleWares;
 
 using CurrencyExchange.Extensions;
+using CurrencyExchange;
 var builder = WebApplication.CreateBuilder(args);
 //Configuration
 builder.Services.AddControllers();
@@ -20,7 +21,7 @@ builder
     .AddCustomLogging()
     .AddOpenTelemetryTracing();
 
-
+builder.Services.Configure<CurrencySettings>(builder.Configuration.GetSection("CurrencySettings"));
 
 builder.Services.AddApiVersioning(options =>
 {
