@@ -1,6 +1,8 @@
 # API Documentation
-
+[CurrencyExcahnge_api_documentation.pdf](https://github.com/user-attachments/files/18815570/CurrencyExcahnge_api_documentation.pdf)
+## USER CREDENTIALS
 ## User Policies
+
 - `adminonly`
 - `userandadmin`
 
