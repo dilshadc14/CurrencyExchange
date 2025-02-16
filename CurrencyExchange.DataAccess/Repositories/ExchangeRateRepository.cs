@@ -52,7 +52,7 @@ namespace CurrencyExchange.DataAccess.Repositories
                         case System.Net.HttpStatusCode.InternalServerError: 
                             throw new ApiException(HttpStatusCode.InternalServerError, "Internal server error occurred.");
                         case System.Net.HttpStatusCode.NotFound: 
-                            throw new ApiException(HttpStatusCode.NotFound, "The Requested Currency Not  Found");
+                            throw new ApiException(HttpStatusCode.NotFound, $"The Requested Currency {baseCurrency} Not  Found");
                         case System.Net.HttpStatusCode.Forbidden: 
                             throw new ApiException(HttpStatusCode.Forbidden, "Access forbidden.");
                         default:

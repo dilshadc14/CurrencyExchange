@@ -11,6 +11,7 @@ namespace CurrencyExchange.BusinessModels.Model
     {
         [Required(ErrorMessage ="From Currency Is Required")]
         [MaxLength(3, ErrorMessage = "From Currency must be exactly 3 characters, e.g., EUR")]
+        [RegularExpression(@"^[A-Za-z]+$", ErrorMessage = "Only letters allowed.")]
         public string From { get; set; }
        
         [MaxLength(3, ErrorMessage = "To Currency must be exactly 3 characters, e.g., EUR")]

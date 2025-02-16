@@ -2,6 +2,7 @@
 using CurrencyExchange.BusinessLayer.Common;
 using CurrencyExchange.BusinessLayer.Interfaces;
 using CurrencyExchange.BusinessModels.Model;
+using CurrencyExchange.Helper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -62,6 +63,11 @@ namespace CurrencyExchange.Controllers
             if (string.IsNullOrEmpty(baseCurrency))
             {
                 return BadRequest("Currency code is required.");
+            }
+            var result = Validation.IsValidCurrencyCode(baseCurrency);
+            if(!result.IsValid)
+            {
+                return BadRequest(result.ErrorMessage);
             }
 
             if (!_currencysetting.IsCurrencyAllowed(baseCurrency))
