@@ -28,19 +28,3 @@ namespace CurrencyExchange.Extensions
 }
 
 
-//builder.Services.AddOpenTelemetry()
-//    .WithTracing(tracerProviderBuilder =>
-//    {
-//        tracerProviderBuilder
-//            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("CurrencyExchange"))
-//            .AddAspNetCoreInstrumentation() 
-//            .AddConsoleExporter(); 
-//        //.AddOtlpExporter(options =>
-//        //    options.Endpoint = new Uri("https://localhost:7279/") 
-//        //)
-//    });
-//builder.Logging.AddOpenTelemetry(options =>
-//{
-//    options.IncludeFormattedMessage = true;
-
-//});

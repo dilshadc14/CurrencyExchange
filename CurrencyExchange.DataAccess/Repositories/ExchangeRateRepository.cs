@@ -40,10 +40,13 @@ namespace CurrencyExchange.DataAccess.Repositories
 
             if (!_cache.TryGetValue(cacheKey, out ExchangeRateDTO rates))
             {
-                //var response = await _httpClient.GetFromJsonAsync<ExchangeRateDTO>($"{_frankfurterApiUrl}/latest?from={baseCurrency}");
-                //_cache.Set(cacheKey, response, TimeSpan.FromMinutes(10));
-                //rates = response;
+                
                 var response = await _httpClient.GetAsync($"{_frankfurterApiUrl}/latest?from={baseCurrency}");
+                if (response == null)
+                {
+                    throw new ApiException(HttpStatusCode.NotFound, $"Failed to fetch exchange rates from the API.");
+
+                }
                 if (!response.IsSuccessStatusCode)
                 {
                     
@@ -60,6 +63,11 @@ namespace CurrencyExchange.DataAccess.Repositories
                     }
                 }
                 rates = await response.Content.ReadFromJsonAsync<ExchangeRateDTO>();
+                if (rates == null)
+                {
+                    throw new ApiException(HttpStatusCode.NotFound, $"Failed to fetch exchange rates from the API.");
+
+                }
                 _cache.Set(cacheKey, rates, TimeSpan.FromMinutes(10));
                
 
@@ -73,17 +81,40 @@ namespace CurrencyExchange.DataAccess.Repositories
 
         public async Task<ExchangeRateDTO> GetLatestRateAsync(string baseCurrency, string targetCurrency)
         {       
-            var response = await _httpClient.GetFromJsonAsync<ExchangeRateDTO>($"{_frankfurterApiUrl}/latest?base={baseCurrency}");
+            var response = await _httpClient.GetAsync($"{_frankfurterApiUrl}/latest?base={baseCurrency}");
             if (response == null)
             {
-                throw new Exception("Failed to fetch exchange rates from the API.");
+                throw new ApiException(HttpStatusCode.NotFound, $"Failed to fetch exchange rates from the API.");
+
             }
-            if (response !=null && !response.Rates.ContainsKey(targetCurrency))
+            if (!response.IsSuccessStatusCode)
             {
-                throw new KeyNotFoundException($"Target currency '{targetCurrency}' not found in the response.");
+
+                switch (response.StatusCode)
+                {
+                    case System.Net.HttpStatusCode.InternalServerError:
+                        throw new ApiException(HttpStatusCode.InternalServerError, "Internal server error occurred.");
+                    case System.Net.HttpStatusCode.NotFound:
+                        throw new ApiException(HttpStatusCode.NotFound, $"The Requested Currency {baseCurrency} Not  Found");
+                    case System.Net.HttpStatusCode.Forbidden:
+                        throw new ApiException(HttpStatusCode.Forbidden, "Access forbidden.");
+                    default:
+                        throw new ApiException(HttpStatusCode.BadRequest, $"Failed to fetch exchange rates. Status code: {response.StatusCode}");
+                }
+            }
+            var result = await response.Content.ReadFromJsonAsync<ExchangeRateDTO>();
+            if (result == null)
+            {
+                throw new ApiException(HttpStatusCode.NotFound, $"Failed to fetch exchange rates from the API.");
+                
+            }
+            if (result != null && !result.Rates.ContainsKey(targetCurrency))
+            {
+                throw new ApiException(HttpStatusCode.NotFound, $"The Requested Currency  Not  Found");
+
             }
 
-            return response;
+            return result;
         }
 
       
@@ -93,14 +124,39 @@ namespace CurrencyExchange.DataAccess.Repositories
             var cacheKey = $"HistoricalRates_{request.BaseCurrency}_{request.StartDate:yyyy-MM-dd}_{request.EndDate:yyyy-MM-dd}";
             if (!_cache.TryGetValue(cacheKey, out HistoricalExchangeRatesDTO rates))
             {
-                var response = await _httpClient.GetFromJsonAsync<HistoricalExchangeRatesDTO>($"{_frankfurterApiUrl}/{request.StartDate:yyyy-MM-dd}..{request.EndDate:yyyy-MM-dd}?from={request.BaseCurrency}");
+                var response = await _httpClient.GetAsync($"{_frankfurterApiUrl}/{request.StartDate:yyyy-MM-dd}..{request.EndDate:yyyy-MM-dd}?from={request.BaseCurrency}");
+                if (response == null)
+                {
+                    throw new ApiException(HttpStatusCode.NotFound, $"Failed to fetch exchange rates from the API.");
+
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    switch (response.StatusCode)
+                    {
+                        case System.Net.HttpStatusCode.InternalServerError:
+                            throw new ApiException(HttpStatusCode.InternalServerError, "Internal server error occurred.");
+                        case System.Net.HttpStatusCode.NotFound:
+                            throw new ApiException(HttpStatusCode.NotFound, $"The Requested Currency {request.BaseCurrency} Not  Found");
+                        case System.Net.HttpStatusCode.Forbidden:
+                            throw new ApiException(HttpStatusCode.Forbidden, "Access forbidden.");
+                        default:
+                            throw new ApiException(HttpStatusCode.BadRequest, $"Failed to fetch exchange rates. Status code: {response.StatusCode}");
+                    }
+                }
+                var result = await response.Content.ReadFromJsonAsync<HistoricalExchangeRatesDTO>();
+                if (result == null)
+                {
+                    throw new ApiException(HttpStatusCode.NotFound, $"Failed to fetch exchange rates from the API.");
+
+                }
                 rates = new HistoricalExchangeRatesDTO
                 {
                     Base = request.BaseCurrency,
                     StartDate = request.StartDate,
                     EndDate = request.EndDate,
-                    Rates = response.Rates
-
+                    Rates = result.Rates
                 };
                 _cache.Set(cacheKey, rates, TimeSpan.FromMinutes(10));
             }

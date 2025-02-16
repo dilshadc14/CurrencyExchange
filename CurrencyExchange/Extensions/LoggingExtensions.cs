@@ -43,15 +43,6 @@ namespace CurrencyExchange.Extensions
     }
 }
 
-//string logFileName = $"logs/retry-log-{DateTime.UtcNow:yyyy-MM-dd}.txt";
-//Log.Logger = new LoggerConfiguration()
-//    .WriteTo.File("logs/retry-log.txt", rollingInterval: RollingInterval.Day)
-//    .CreateLogger();
-
-//Log.Logger = new LoggerConfiguration()
-//    .ReadFrom.Configuration(builder.Configuration)
-//    .Enrich.FromLogContext()
-//    .CreateLogger();
 
 
 
