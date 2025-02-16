@@ -41,4 +41,9 @@ namespace CurrencyExchange
             return !_excludedCurrencies.Contains(currencyCode.ToUpperInvariant());
         }
     }
+
+    public class ClientIpSettings
+    {
+        public string DefaultIp { get; set; }
+    }
 }

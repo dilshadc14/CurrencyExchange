@@ -9,11 +9,15 @@ namespace CurrencyExchange.BusinessModels.Model
 {
     public class HistoricalRatesRequest
     {
+        [Required]
         public string BaseCurrency { get; set; }
-
-        [DataType(DataType.Date)]
+        [Required]
+        [DataType(DataType.Date, ErrorMessage = "Invalid date format.")]
+        [Display(Name ="Start Date")]
         public DateTime StartDate { get; set; }
-        [DataType(DataType.Date)]
+        [DataType(DataType.Date, ErrorMessage = "Invalid date format.")]
+
+        [Display(Name = "End Date")]
         public DateTime EndDate { get; set; }
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 10;

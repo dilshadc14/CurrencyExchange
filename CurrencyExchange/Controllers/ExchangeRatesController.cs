@@ -84,16 +84,34 @@ namespace CurrencyExchange.Controllers
         [EnableRateLimiting("StrictLimit")]
         public async Task<IActionResult> GetHistoricalRates([FromQuery] HistoricalRatesRequest request)
         {
-            if (string.IsNullOrEmpty(request.BaseCurrency))
+            if (ModelState.IsValid)
             {
-                return BadRequest("Please provide the currency to exchange");
+               
+                var validation = Validation.IsValidCurrencyCode(request.BaseCurrency);
+                if (!validation.IsValid)
+                {
+                    return BadRequest(validation.ErrorMessage);
+                }
+                if (!_currencysetting.IsCurrencyAllowed(request.BaseCurrency))
+                {
+                    return BadRequest("Conversion for TRY, PLN, THB, and MXN is not supported.");
+                }
+                if(request.StartDate> request.EndDate)
+                {
+                    return BadRequest("Start Date  must be less than or equal to End Date ");
+                }
+
+
+                var result = await _currencyService.GetHistoricalRatesAsync(request);
+                return Ok(result);
             }
-            if (!_currencysetting.IsCurrencyAllowed(request.BaseCurrency))
+            else
             {
-                return BadRequest("Conversion for TRY, PLN, THB, and MXN is not supported.");
+                var errors = ModelState.Keys
+               .SelectMany(key => ModelState[key].Errors.Select(x => new { Field = key, Message = x.ErrorMessage }))
+               .ToList();
+                return BadRequest(new { Errors = errors });
             }
-            var result = await _currencyService.GetHistoricalRatesAsync(request);
-            return Ok(result);
         }
     }
 }

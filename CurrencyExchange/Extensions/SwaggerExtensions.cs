@@ -61,7 +61,7 @@ namespace CurrencyExchange.Extensions
 //        Description = "Enter your JWT token in the format: Bearer {token}"
 //    });
 
-//    // Make Swagger require a token for all endpoints
+
 //    options.AddSecurityRequirement(new OpenApiSecurityRequirement
 //    {
 //        {

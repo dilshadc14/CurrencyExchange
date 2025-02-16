@@ -22,7 +22,7 @@ builder
     .AddOpenTelemetryTracing();
 
 builder.Services.Configure<CurrencySettings>(builder.Configuration.GetSection("CurrencySettings"));
-
+builder.Services.Configure<ClientIpSettings>(builder.Configuration.GetSection("ClientIpSettings"));
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
@@ -61,5 +61,5 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
-
+app.UseMiddleware<ClientIpMiddleware>();
 app.Run();
