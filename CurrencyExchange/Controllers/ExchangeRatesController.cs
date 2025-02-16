@@ -6,6 +6,7 @@ using CurrencyExchange.Helper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace CurrencyExchange.Controllers
 {
@@ -23,7 +24,10 @@ namespace CurrencyExchange.Controllers
             _currencyService = currencyService;
             _currencysetting = currencysetting;
         }
-
+        [SwaggerOperation(
+  Summary = "Convert currency",
+  Description = "Converts an amount from one currency to another using exchange rates."
+)]
         [HttpPost("convert")]
         [Authorize(Policy = "UserOrAdmin")]
         [EnableRateLimiting("StrictLimit")]
@@ -54,7 +58,10 @@ namespace CurrencyExchange.Controllers
                 return BadRequest(new { Errors = errors });
             }
         }
-
+        [SwaggerOperation(
+Summary = "Convert currency",
+Description = "Generate conversion rate using Basic currency  exchange rates."
+)]
         [HttpGet("latest")]
         [Authorize(Policy = "UserOrAdmin")]
         [EnableRateLimiting("LowTrafficPolicy")]
@@ -82,6 +89,11 @@ namespace CurrencyExchange.Controllers
         [HttpGet("historical")]
         [Authorize(Policy = "AdminOnly")]
         [EnableRateLimiting("StrictLimit")]
+
+        [SwaggerOperation(
+Summary = "Convert currency",
+Description = "Generate conversion rate using Basic currency  exchange rates. for  perticular time frame access restricted to admin"
+)]
         public async Task<IActionResult> GetHistoricalRates([FromQuery] HistoricalRatesRequest request)
         {
             if (ModelState.IsValid)

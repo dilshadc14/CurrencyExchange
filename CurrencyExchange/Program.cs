@@ -6,6 +6,7 @@ using CurrencyExchange.MiddleWares;
 
 using CurrencyExchange.Extensions;
 using CurrencyExchange;
+using System.Reflection;
 var builder = WebApplication.CreateBuilder(args);
 //Configuration
 builder.Services.AddControllers();

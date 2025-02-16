@@ -1,4 +1,6 @@
-﻿using Microsoft.OpenApi.Models;
+﻿using System;
+using System.Reflection;
+using Microsoft.OpenApi.Models;
 
 namespace CurrencyExchange.Extensions
 {
@@ -8,7 +10,15 @@ namespace CurrencyExchange.Extensions
         {
             services.AddSwaggerGen(options =>
             {
-                options.SwaggerDoc("v1", new OpenApiInfo { Title = "Exchange Rate API", Version = "v1" });
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "Exchange Rate API", Version = "v1" ,
+                    Description = "API for converting currency exchange rates.",
+                    Contact = new OpenApiContact { Name = "MOHAMMED DILSHAD KK", Email = "dilshadc14@email.com" }
+                });
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                options.IncludeXmlComments(xmlPath);
+
+
 
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {

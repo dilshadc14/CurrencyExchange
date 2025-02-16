@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using CurrencyExchange.BusinessModels.Model;
+using Swashbuckle.AspNetCore.Annotations;
 
 
 namespace CurrencyExchange.Controllers
@@ -15,6 +16,11 @@ namespace CurrencyExchange.Controllers
         {
             _jwtService = jwtService;
         }
+
+        [SwaggerOperation(
+  Summary = "Get Token",
+  Description = "Two Addount admin and User Credentials are  Shared"
+)]
 
         [HttpPost("login")]
         public IActionResult Login([FromBody] BusinessModels.Model.LoginRequest request)
